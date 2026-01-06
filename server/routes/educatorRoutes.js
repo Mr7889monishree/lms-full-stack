@@ -7,7 +7,7 @@ import { protectEducator } from '../middlewares/authMiddleware.js';
 const educatorRouter = express.Router()
 
 // Add Educator Role 
-educatorRouter.get('/update-role', updateRoleToEducator)
+educatorRouter.post('/update-role', updateRoleToEducator)
 
 // Add Courses 
 educatorRouter.post('/add-course', upload.single('image'), protectEducator, addCourse)

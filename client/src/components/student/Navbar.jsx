@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { assets } from '../../assets/assets';
 import { Link, useLocation } from 'react-router-dom';
 import { AppContext } from '../../context/AppContext';
-import {UserButton, useUser } from '@clerk/clerk-react';
+import { useClerk, UserButton, useUser } from '@clerk/clerk-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -13,7 +13,7 @@ const Navbar = () => {
   const { backendUrl, isEducator, setIsEducator, navigate, getToken } = useContext(AppContext);
   const { openSignIn, user } = useUser();
 
-  // Initialize local state based on Clerk role
+  // Initialize state based on user role
   useEffect(() => {
     if (user?.publicMetadata?.role === 'educator') {
       setIsEducator(true);
@@ -28,19 +28,19 @@ const Navbar = () => {
 
       // Call backend toggle endpoint
       const { data } = await axios.post(
-        `${backendUrl}/api/educator/update-role`,
+        `${backendUrl}/api/educator/toggle-role`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (data.success) {
-        // Update state based on new role
+        // Update local state
         setIsEducator(data.role === 'educator');
         toast.success(data.message);
 
-        // Redirect if promoted
-        if (data.role === 'educator') navigate('/educator');
-        else navigate('/'); // optional redirect when reverted
+        // Redirect if educator, else optional back to home
+        if (data.role === 'educator') navigate('/educator/dashboard');
+        else navigate('/');
       } else {
         toast.error(data.message);
       }
@@ -52,6 +52,7 @@ const Navbar = () => {
   return (
     <div className={`flex items-center justify-between px-4 sm:px-10 md:px-14 lg:px-36 border-b border-gray-500 py-4 ${isCoursesListPage ? 'bg-white' : 'bg-cyan-100/70'}`}>
       <img onClick={() => navigate('/')} src={assets.logo} alt="Logo" className="w-28 lg:w-32 cursor-pointer" />
+
       <div className="md:flex hidden items-center gap-5 text-gray-500">
         <div className="flex items-center gap-5">
           {user && (
@@ -72,7 +73,7 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* For Phone Screens */}
+      {/* Mobile Navbar */}
       <div className='md:hidden flex items-center gap-2 sm:gap-5 text-gray-500'>
         <div className="flex items-center gap-1 sm:gap-2 max-sm:text-xs">
           <button onClick={toggleEducatorRole}>
