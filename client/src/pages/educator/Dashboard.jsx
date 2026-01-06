@@ -4,12 +4,14 @@ import { AppContext } from '../../context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Loading from '../../components/student/Loading';
+import { useUser } from '@clerk/clerk-react';
 
 const Dashboard = () => {
 
   const { backendUrl, isEducator, currency, getToken } = useContext(AppContext)
 
   const [dashboardData, setDashboardData] = useState(null)
+  const {user}=useUser();
 
   const fetchDashboardData = async () => {
     try {
