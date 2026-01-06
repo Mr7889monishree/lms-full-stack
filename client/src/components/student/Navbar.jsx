@@ -2,7 +2,7 @@ import React, { useContext, useEffect } from 'react';
 import { assets } from '../../assets/assets';
 import { Link, useLocation } from 'react-router-dom';
 import { AppContext } from '../../context/AppContext';
-import { useClerk, UserButton, useUser } from '@clerk/clerk-react';
+import {UserButton, useUser,useClerk} from '@clerk/clerk-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -11,9 +11,10 @@ const Navbar = () => {
   const isCoursesListPage = location.pathname.includes('/course-list');
 
   const { backendUrl, isEducator, setIsEducator, navigate, getToken } = useContext(AppContext);
-  const { openSignIn, user } = useUser();
+  const {user } = useUser();
+  const {openSignIn}=useClerk();
 
-  // Initialize state based on user role
+  // Initialize local state based on Clerk role
   useEffect(() => {
     if (user?.publicMetadata?.role === 'educator') {
       setIsEducator(true);
@@ -28,19 +29,19 @@ const Navbar = () => {
 
       // Call backend toggle endpoint
       const { data } = await axios.post(
-        `${backendUrl}/api/educator/toggle-role`,
+        `${backendUrl}/api/educator/update-role`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (data.success) {
-        // Update local state
+        // Update state based on new role
         setIsEducator(data.role === 'educator');
         toast.success(data.message);
 
-        // Redirect if educator, else optional back to home
+        // Redirect if promoted
         if (data.role === 'educator') navigate('/educator/dashboard');
-        else navigate('/');
+        else navigate('/'); // optional redirect when reverted
       } else {
         toast.error(data.message);
       }
@@ -52,7 +53,6 @@ const Navbar = () => {
   return (
     <div className={`flex items-center justify-between px-4 sm:px-10 md:px-14 lg:px-36 border-b border-gray-500 py-4 ${isCoursesListPage ? 'bg-white' : 'bg-cyan-100/70'}`}>
       <img onClick={() => navigate('/')} src={assets.logo} alt="Logo" className="w-28 lg:w-32 cursor-pointer" />
-
       <div className="md:flex hidden items-center gap-5 text-gray-500">
         <div className="flex items-center gap-5">
           {user && (
@@ -73,7 +73,7 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* Mobile Navbar */}
+      {/* For Phone Screens */}
       <div className='md:hidden flex items-center gap-2 sm:gap-5 text-gray-500'>
         <div className="flex items-center gap-1 sm:gap-2 max-sm:text-xs">
           <button onClick={toggleEducatorRole}>
