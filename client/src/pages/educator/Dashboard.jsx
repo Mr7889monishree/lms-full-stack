@@ -32,12 +32,11 @@ const Dashboard = () => {
   }
 
   useEffect(() => {
+  if (user) { // fetch only if user exists
+    fetchDashboardData()
+  }
+}, [user])
 
-    if (isEducator) {
-      fetchDashboardData()
-    }
-
-  }, [isEducator])
 
   const studentsData = [
     {

@@ -24,7 +24,7 @@ const Navbar = () => {
   }, [user]);
 
   const toggleEducatorRole = async () => {
-    try {
+     try {
       const token = await getToken();
 
       // Call backend toggle endpoint
@@ -35,19 +35,20 @@ const Navbar = () => {
       );
 
       if (data.success) {
-        // Update state based on new role
+        // Update local UI state only
         setIsEducator(data.role === 'educator');
         toast.success(data.message);
 
-        // Redirect if promoted
+        // Redirect only if educator
         if (data.role === 'educator') navigate('/educator/dashboard');
-        else navigate('/'); // optional redirect when reverted
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.message);
+        // else optional redirect for student
+        else navigate('/'); 
+    } else {
+      toast.error(data.message);
     }
+  } catch (error) {
+    toast.error(error.message);
+  }
   };
 
   return (
