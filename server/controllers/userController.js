@@ -11,7 +11,7 @@ import stripe from "stripe"
 export const getUserData = async (req, res) => {
     try {
 
-        const userId = getAuth(req);
+        const {userId} = getAuth(req);
 
         const user = await User.findById(userId)
 
@@ -35,7 +35,7 @@ export const purchaseCourse = async (req, res) => {
         const { origin } = req.headers
 
 
-        const userId = req.auth.userId
+        const {userId} = getAuth(req);
 
         const courseData = await Course.findById(courseId)
         const userData = await User.findById(userId)
@@ -92,7 +92,7 @@ export const userEnrolledCourses = async (req, res) => {
 
     try {
 
-        const userId = getAuth(req);
+        const {userId} = getAuth(req);
 
         const userData = await User.findById(userId)
             .populate('enrolledCourses')
@@ -110,7 +110,7 @@ export const updateUserCourseProgress = async (req, res) => {
 
     try {
 
-        const userId = getAuth(req);
+        const {userId} = getAuth(req);
 
         const { courseId, lectureId } = req.body
 
@@ -148,7 +148,7 @@ export const getUserCourseProgress = async (req, res) => {
 
     try {
 
-        const userId = getAuth(req);
+        const {userId} = getAuth(req);
 
         const { courseId } = req.body
 
@@ -165,7 +165,7 @@ export const getUserCourseProgress = async (req, res) => {
 // Add User Ratings to Course
 export const addUserRating = async (req, res) => {
 
-    const userId = getAuth(req);
+    const {userId} = getAuth(req);
     const { courseId, rating } = req.body;
 
     // Validate inputs
