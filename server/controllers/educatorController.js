@@ -37,6 +37,21 @@ export const updateRoleToEducator = async (req, res) => {
   }
 };
 
+export const demoteRoleToStudent = async (req, res) => {
+  try {
+    const { userId } = getAuth(req);
+
+    await clerkClient.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        role: 'student', // reset to student
+      },
+    });
+
+    res.json({ success: true, message: 'Role changed to student', role: 'student' });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
 
 // Add New Course
 export const addCourse = async (req, res) => {
