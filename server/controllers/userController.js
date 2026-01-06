@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express"
 import Course from "../models/Course.js"
 import { CourseProgress } from "../models/CourseProgress.js"
 import { Purchase } from "../models/Purchase.js"
@@ -10,7 +11,7 @@ import stripe from "stripe"
 export const getUserData = async (req, res) => {
     try {
 
-        const userId = req.auth.userId
+        const userId = getAuth(req);
 
         const user = await User.findById(userId)
 
@@ -91,7 +92,7 @@ export const userEnrolledCourses = async (req, res) => {
 
     try {
 
-        const userId = req.auth.userId
+        const userId = getAuth(req);
 
         const userData = await User.findById(userId)
             .populate('enrolledCourses')
@@ -109,7 +110,7 @@ export const updateUserCourseProgress = async (req, res) => {
 
     try {
 
-        const userId = req.auth.userId
+        const userId = getAuth(req);
 
         const { courseId, lectureId } = req.body
 
@@ -147,7 +148,7 @@ export const getUserCourseProgress = async (req, res) => {
 
     try {
 
-        const userId = req.auth.userId
+        const userId = getAuth(req);
 
         const { courseId } = req.body
 
@@ -164,7 +165,7 @@ export const getUserCourseProgress = async (req, res) => {
 // Add User Ratings to Course
 export const addUserRating = async (req, res) => {
 
-    const userId = req.auth.userId;
+    const userId = getAuth(req);
     const { courseId, rating } = req.body;
 
     // Validate inputs
