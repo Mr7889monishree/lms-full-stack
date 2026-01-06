@@ -36,7 +36,6 @@ export const updateRoleToEducator = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 export const demoteRoleToStudent = async (req, res) => {
   try {
     const { userId } = getAuth(req);
@@ -52,6 +51,8 @@ export const demoteRoleToStudent = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+
 
 // Add New Course
 export const addCourse = async (req, res) => {
