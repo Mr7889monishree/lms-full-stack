@@ -28,7 +28,7 @@ const Navbar = () => {
 
       // Call backend toggle endpoint
       const { data } = await axios.post(
-        `${backendUrl}/api/educator/toggle-role`,
+        `${backendUrl}/api/educator/update-role`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
