@@ -5,25 +5,38 @@ import User from '../models/User.js';
 import { clerkClient, getAuth } from '@clerk/express'
 
 // update role to educator
-export const updateRoleToEducator = async (req, res) => {
+export const toggleRoleEducator = async (req, res) => {
+  try {
+    const { userId } = getAuth(req);
 
-    try {
+    // Get current user metadata from Clerk
+    const user = await clerkClient.users.getUser(userId);
+    const currentRole = user.publicMetadata?.role || 'student';
 
-        const {userId} = getAuth(req);
+    // Toggle role
+    const newRole = currentRole === 'educator' ? 'student' : 'educator';
 
-        await clerkClient.users.updateUserMetadata(userId, {
-            publicMetadata: {
-                role: 'educator',
-            },
-        })
+    // Update Clerk metadata
+    await clerkClient.users.updateUserMetadata(userId, {
+      publicMetadata: { role: newRole },
+    });
 
-        res.json({ success: true, message: 'You can publish a course now' })
+    // Update MongoDB user role as well
+    await User.findByIdAndUpdate(userId, { role: newRole });
 
-    } catch (error) {
-        res.json({ success: false, message: error.message })
-    }
+    res.json({
+      success: true,
+      message: newRole === 'educator' 
+        ? 'You are now an educator!' 
+        : 'You are now a student again.',
+      role: newRole
+    });
 
-}
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 // Add New Course
 export const addCourse = async (req, res) => {
