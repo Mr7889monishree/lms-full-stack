@@ -5,7 +5,7 @@ import User from '../models/User.js';
 import { clerkClient, getAuth } from '@clerk/express'
 
 // update role to educator
-export const toggleRoleEducator = async (req, res) => {
+export const updateRoleToEducator = async (req, res) => {
   try {
     const { userId } = getAuth(req);
 
