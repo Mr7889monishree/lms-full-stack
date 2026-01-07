@@ -193,7 +193,7 @@ export const getEnrolledStudentsData = async (req, res) => {
 //QUIZ CONTROLLERS- ADD QUIZ(EDUCATOR)
 export const addQuizController = async (req, res) => {
   const {courseId,quiz} = req.body;
-  const course = await Course.findById(courseId);
+  const course = await Course.findById({courseId});
 
   if (!course) return res.json({ success: false, message: 'Course not found' });
 
