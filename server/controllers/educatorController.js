@@ -3,6 +3,7 @@ import Course from '../models/Course.js';
 import { Purchase } from '../models/Purchase.js';
 import User from '../models/User.js';
 import { clerkClient, getAuth } from '@clerk/express'
+import { CourseProgress } from '../models/CourseProgress.js';
 
 // update role to educator
 export const updateRoleToEducator = async (req, res) => {
@@ -94,9 +95,9 @@ export const addCourse = async (req, res) => {
 export const getEducatorCourses = async (req, res) => {
     try {
 
-        const {educator} = getAuth(req);
+        const {userId} = getAuth(req);
 
-        const courses = await Course.find({ educator })
+        const courses = await Course.find({ educator:userId })
 
         res.json({ success: true, courses })
 
@@ -108,9 +109,9 @@ export const getEducatorCourses = async (req, res) => {
 // Get Educator Dashboard Data ( Total Earning, Enrolled Students, No. of Courses)
 export const educatorDashboardData = async (req, res) => {
     try {
-        const {educator} = getAuth(req);
+        const {userId} = getAuth(req);
 
-        const courses = await Course.find({ educator });
+        const courses = await Course.find({educator: userId });
 
         const totalCourses = courses.length;
 
@@ -155,10 +156,10 @@ export const educatorDashboardData = async (req, res) => {
 // Get Enrolled Students Data with Purchase Data
 export const getEnrolledStudentsData = async (req, res) => {
     try {
-        const {educator} = getAuth(req);
+        const {userId} = getAuth(req);
 
         // Fetch all courses created by the educator
-        const courses = await Course.find({ educator });
+        const courses = await Course.find({ educator:userId });
 
         // Get the list of course IDs
         const courseIds = courses.map(course => course._id);
@@ -186,5 +187,52 @@ export const getEnrolledStudentsData = async (req, res) => {
             success: false,
             message: error.message
         });
+    }
+};
+
+//QUIZ CONTROLLERS- ADD QUIZ(EDUCATOR)
+export const addQuizController = async (req, res) => {
+  const { courseId} = req.body;
+  const {quiz}=req.body;
+  const course = await CourseProgress.findById(courseId);
+
+  if (!course) return res.json({ success: false, message: 'Course not found' });
+
+  course.quiz = quiz; // overwrite or append
+  await course.save();
+
+  res.json({ success: true, message: 'Quiz added successfully', course });
+};
+
+//SUBMIT QUIZ TO COURSE(STUDENT)
+export const submitQuizController = async (req, res) => {
+    try{
+    const { userId } = getAuth(req);
+    const { courseId, answers } = req.body;
+
+    const course = await Course.findById(courseId);
+    if (!course) return res.json({ success: false, message: 'Course not found' });
+
+    let correct = 0;
+    course.quiz.forEach((q, index) => {
+        if (answers[index] === q.correctAnswer) correct++;
+    });
+
+    const passThreshold = 0.5;
+    const passed = correct / totalQuestions >= passThreshold;
+    const progress = await CourseProgress.findOne({ userId, courseId });
+    if (!progress) return res.json({ success: false, message: 'Course progress not found' });
+    progress.quizPassed = passed;
+    await progress.save();
+
+    res.json({
+        success: true,
+        passed,
+        correct,
+        totalQuestions,
+        message: passed ? 'Quiz passed!' : 'Quiz failed. Try again!'
+        });
+    }catch(error){
+        res.json({success:false,message:error.message});
     }
 };

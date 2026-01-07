@@ -11,7 +11,7 @@ const Dashboard = () => {
   const { backendUrl, isEducator, currency, getToken } = useContext(AppContext)
 
   const [dashboardData, setDashboardData] = useState(null)
-  const {user}=useUser();
+  const {user,isLoaded}=useUser();
 
   const fetchDashboardData = async () => {
     try {
@@ -34,10 +34,10 @@ const Dashboard = () => {
   }
 
   useEffect(() => {
-  if (user) { // fetch only if user exists
-    fetchDashboardData()
-  }
-}, [user])
+  if (!isLoaded || !user) return;  // fetch only if user exists
+  fetchDashboardData()
+  
+}, [isLoaded,user])
 
 
   const studentsData = [

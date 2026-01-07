@@ -167,7 +167,7 @@ const Player = () => {
                       <li key={i} className="flex items-start gap-2 py-1">
                         <img
                           src={
-                            progressData?.lectureCompleted?.includes(
+                            progressData?.completedLectures?.includes(
                               lecture.lectureId
                             )
                               ? assets.blue_tick_icon
@@ -249,7 +249,7 @@ const Player = () => {
                   }
                   className="text-blue-600"
                 >
-                  {progressData?.lectureCompleted?.includes(
+                  {progressData?.completedLectures?.includes(
                     playerData.lectureId
                   )
                     ? 'Completed'

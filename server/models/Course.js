@@ -41,6 +41,13 @@ const courseSchema = new mongoose.Schema({
             ref: 'User'
         }
     ],
+    quiz: [
+    {
+      question: { type: String, required: true },
+      options: [{ type: String, required: true }],
+      correctAnswer: { type: String, required: true },
+    }
+  ]
 }, { timestamps: true, minimize: false });
 
 const Course = mongoose.model('Course', courseSchema);
