@@ -205,3 +205,78 @@ export const addUserRating = async (req, res) => {
         return res.json({ success: false, message: error.message });
     }
 };
+
+//SUBMIT QUIZ TO COURSE(STUDENT)
+export const submitQuizController = async (req, res) => {
+  try {
+    const { userId } = getAuth(req);
+    const { courseId, answers } = req.body;
+
+    if (!Array.isArray(answers)) {
+      return res.json({ success: false, message: "Invalid answers format" });
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.json({ success: false, message: "Course not found" });
+    }
+
+    const quiz = course.quiz || [];
+    const totalQuestions = quiz.length;
+
+    if (totalQuestions === 0) {
+      return res.json({ success: false, message: "No quiz available" });
+    }
+
+    let correct = 0;
+
+    quiz.forEach((q, index) => {
+      const userAnswerText = answers[index]; // "Paris"
+      if (!userAnswerText) return;
+
+      // Find index of the selected option
+      const selectedIndex = q.options.findIndex(
+        opt => opt.toString().trim() === userAnswerText.toString().trim()
+      );
+
+      // Compare with stored correctAnswer index
+      if (selectedIndex === q.correctAnswer) {
+        correct++;
+      }
+    });
+
+    const passed = correct / totalQuestions >= 0.5;
+
+    const progress = await CourseProgress.findOne({ userId, courseId });
+    if (!progress) {
+      return res.json({ success: false, message: "Course progress not found" });
+    }
+
+    progress.quizPassed = passed;
+
+    const totalLectures = course.courseContent.reduce(
+      (acc, chapter) => acc + chapter.chapterContent.length,
+      0
+    );
+
+    if (progress.completedLectures.length === totalLectures && passed) {
+      progress.isCompleted = true;
+      progress.completedAt = new Date();
+    }
+
+    await progress.save();
+
+    res.json({
+      success: true,
+      passed,
+      correct,
+      totalQuestions,
+      message: passed ? "Quiz passed!" : "Quiz failed. Try again!",
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false, message: err.message });
+  }
+};
+

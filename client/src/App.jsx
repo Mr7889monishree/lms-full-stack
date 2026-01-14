@@ -1,5 +1,4 @@
-import React, { useContext } from 'react'
-import { Routes, Route, useLocation, useMatch } from 'react-router-dom'
+import { Routes, Route, useMatch } from 'react-router-dom'
 import Navbar from './components/student/Navbar'
 import Home from './pages/student/Home'
 import CourseDetails from './pages/student/CourseDetails'
@@ -15,6 +14,8 @@ import { ToastContainer } from 'react-toastify'
 import Player from './pages/student/Player'
 import MyEnrollments from './pages/student/MyEnrollments'
 import Loading from './components/student/Loading'
+import QuizPage from './pages/student/quizPage'
+import CertificatePage from './pages/student/certificatePage'
 
 const App = () => {
 
@@ -32,7 +33,9 @@ const App = () => {
         <Route path="/course-list/:input" element={<CoursesList />} />
         <Route path="/my-enrollments" element={<MyEnrollments />} />
         <Route path="/player/:courseId" element={<Player />} />
+        <Route path="/quiz/:courseId" element={<QuizPage />} />
         <Route path="/loading/:path" element={<Loading />} />
+        <Route path='/certificate/:courseId' element={<CertificatePage/>}/>
         <Route path='/educator' element={<Educator />}>
           <Route path='dashboard' element={<Dashboard />} />
           <Route path='add-course' element={<AddCourse />} />

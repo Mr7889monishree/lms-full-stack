@@ -64,7 +64,7 @@ export const addCourse = async (req, res) => {
 
         const imageFile = req.file
 
-        const educatorId = req.auth.userId
+        const {userId} = getAuth(req);
 
         if (!imageFile) {
             return res.json({ success: false, message: 'Thumbnail Not Attached' })
@@ -72,7 +72,7 @@ export const addCourse = async (req, res) => {
 
         const parsedCourseData = await JSON.parse(courseData)
 
-        parsedCourseData.educator = educatorId
+        parsedCourseData.educator = userId
 
         const newCourse = await Course.create(parsedCourseData)
 
@@ -190,48 +190,24 @@ export const getEnrolledStudentsData = async (req, res) => {
     }
 };
 
-//QUIZ CONTROLLERS- ADD QUIZ(EDUCATOR)
-export const addQuizController = async (req, res) => {
-  const {courseId,quiz} = req.body;
-  const course = await Course.findById({courseId});
 
-  if (!course) return res.json({ success: false, message: 'Course not found' });
-
-  course.quiz = quiz; // overwrite or append
-  await course.save();
-
-  res.json({ success: true, message: 'Quiz added successfully', course });
-};
-
-//SUBMIT QUIZ TO COURSE(STUDENT)
-export const submitQuizController = async (req, res) => {
-    try{
-    const { userId } = getAuth(req);
-    const { courseId, answers } = req.body;
+export const deleteCourseController = async (req, res) => {
+  try {
+    const { courseId } = req.params;
 
     const course = await Course.findById(courseId);
-    if (!course) return res.json({ success: false, message: 'Course not found' });
+    if (!course) return res.json({ success: false, message: "Course not found" });
 
-    let correct = 0;
-    course.quiz.forEach((q, index) => {
-        if (answers[index] === q.correctAnswer) correct++;
-    });
+    // Optional: check if the logged-in educator owns this course
+    // if (course.educator.toString() !== req.userId) return res.json({ success: false, message: "Unauthorized" });
 
-    const passThreshold = 0.5;
-    const passed = correct / totalQuestions >= passThreshold;
-    const progress = await CourseProgress.findOne({ userId, courseId });
-    if (!progress) return res.json({ success: false, message: 'Course progress not found' });
-    progress.quizPassed = passed;
-    await progress.save();
+    await Course.findByIdAndDelete(courseId);
 
-    res.json({
-        success: true,
-        passed,
-        correct,
-        totalQuestions,
-        message: passed ? 'Quiz passed!' : 'Quiz failed. Try again!'
-        });
-    }catch(error){
-        res.json({success:false,message:error.message});
-    }
+    // Delete all course progress for this course
+    await CourseProgress.deleteMany({ courseId });
+
+    res.json({ success: true, message: "Course deleted successfully" });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
 };

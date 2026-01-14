@@ -5,32 +5,45 @@ import { toast } from 'react-toastify';
 import Loading from '../../components/student/Loading';
 
 const MyCourses = () => {
+  const { backendUrl, isEducator, currency, getToken } = useContext(AppContext);
+  const [courses, setCourses] = useState(null);
 
-  const { backendUrl, isEducator, currency, getToken } = useContext(AppContext)
-
-  const [courses, setCourses] = useState(null)
-
+  // Fetch educator courses
   const fetchEducatorCourses = async () => {
-
     try {
-
-      const token = await getToken()
-
-      const { data } = await axios.get(backendUrl + '/api/educator/courses', { headers: { Authorization: `Bearer ${token}` } })
-
-      data.success && setCourses(data.courses)
-
+      const token = await getToken();
+      const { data } = await axios.get(`${backendUrl}/api/educator/courses`, { headers: { Authorization: `Bearer ${token}` } });
+      data.success && setCourses(data.courses);
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     }
-
-  }
+  };
 
   useEffect(() => {
-    if (isEducator) {
-      fetchEducatorCourses()
+    if (isEducator) fetchEducatorCourses();
+  }, [isEducator]);
+
+  // Handle course deletion
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm("Are you sure you want to delete this course?")) return;
+
+    try {
+      const token = await getToken();
+      const { data } = await axios.delete(
+        `${backendUrl}/api/educator/delete-course/${courseId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success("Course deleted successfully");
+        setCourses((prev) => prev.filter((course) => course._id !== courseId));
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
-  }, [isEducator])
+  };
 
   return courses ? (
     <div className="h-screen flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0">
@@ -44,6 +57,7 @@ const MyCourses = () => {
                 <th className="px-4 py-3 font-semibold truncate">Earnings</th>
                 <th className="px-4 py-3 font-semibold truncate">Students</th>
                 <th className="px-4 py-3 font-semibold truncate">Published On</th>
+                <th className="px-4 py-3 font-semibold truncate">Actions</th> {/* NEW COLUMN */}
               </tr>
             </thead>
             <tbody className="text-sm text-gray-500">
@@ -55,8 +69,14 @@ const MyCourses = () => {
                   </td>
                   <td className="px-4 py-3">{currency} {Math.floor(course.enrolledStudents.length * (course.coursePrice - course.discount * course.coursePrice / 100))}</td>
                   <td className="px-4 py-3">{course.enrolledStudents.length}</td>
+                  <td className="px-4 py-3">{new Date(course.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
-                    {new Date(course.createdAt).toLocaleDateString()}
+                    <button
+                      className="bg-red-500 text-white px-3 py-1 rounded"
+                      onClick={() => handleDeleteCourse(course._id)}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -65,7 +85,7 @@ const MyCourses = () => {
         </div>
       </div>
     </div>
-  ) : <Loading />
+  ) : <Loading />;
 };
 
 export default MyCourses;

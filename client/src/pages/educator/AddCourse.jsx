@@ -26,6 +26,17 @@ const AddCourse = () => {
     lectureUrl: '',
     isPreviewFree: false,
   });
+  // FINAL QUIZ STATE
+  const [finalQuiz, setFinalQuiz] = useState({
+    passingScore: 60,
+    questions: [],
+  });
+
+  const [quizQuestion, setQuizQuestion] = useState({
+    question: '',
+    options: ['', '', '', ''],
+    correctAnswer: 0,
+  });
 
   const handleChapter = (action, chapterId) => {
     if (action === 'add') {
@@ -105,6 +116,7 @@ const AddCourse = () => {
         coursePrice: Number(coursePrice),
         discount: Number(discount),
         courseContent: chapters,
+        quiz:finalQuiz.questions
       }
 
       const formData = new FormData()
@@ -181,6 +193,112 @@ const AddCourse = () => {
           <p>Discount %</p>
           <input onChange={e => setDiscount(e.target.value)} value={discount} type="number" placeholder='0' min={0} max={100} className='outline-none md:py-2.5 py-2 w-28 px-3 rounded border border-gray-500' required />
         </div>
+        {/* FINAL QUIZ SECTION */}
+          <div className="mt-6 border p-4 rounded bg-white">
+            <h3 className="font-semibold text-lg mb-3">Final Quiz</h3>
+
+            <input
+              type="text"
+              placeholder="Question"
+              className="w-full border p-2 mb-2"
+              value={quizQuestion.question}
+              onChange={(e) =>
+                setQuizQuestion({ ...quizQuestion, question: e.target.value })
+              }
+            />
+
+            {quizQuestion.options.map((opt, index) => (
+              <input
+                key={index}
+                type="text"
+                placeholder={`Option ${index + 1}`}
+                className="w-full border p-2 mb-2"
+                value={opt}
+                onChange={(e) => {
+                  const updatedOptions = [...quizQuestion.options];
+                  updatedOptions[index] = e.target.value;
+                  setQuizQuestion({
+                    ...quizQuestion,
+                    options: updatedOptions,
+                  });
+                }}
+              />
+            ))}
+
+            <select
+              className="w-full border p-2 mb-2"
+              value={quizQuestion.correctAnswer}
+              onChange={(e) =>
+                setQuizQuestion({
+                  ...quizQuestion,
+                  correctAnswer: Number(e.target.value),
+                })
+              }
+            >
+              {[0, 1, 2, 3].map((i) => (
+                <option key={i} value={i}>
+                  Correct Option {i + 1}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={() => {
+                  if (!quizQuestion.question.trim()) {
+                    toast.error('Question cannot be empty');
+                    return;
+                  }
+                  setFinalQuiz({
+                    ...finalQuiz,
+                    questions: [...finalQuiz.questions, quizQuestion],
+                  });
+                  setQuizQuestion({
+                    question: '',
+                    options: ['', '', '', ''],
+                    correctAnswer: 0,
+                  });
+                }}
+              >
+                Add Question
+              </button>
+              <button
+                type="button"
+                className="bg-gray-300 text-black px-4 py-2 rounded"
+                onClick={() =>
+                  setFinalQuiz({ ...finalQuiz, questions: [] })
+                }
+              >
+                Clear All
+              </button>
+            </div>
+
+            {/* Display list of added questions */}
+            {finalQuiz.questions.length > 0 && (
+              <div className="mt-2 border-t pt-2">
+                {finalQuiz.questions.map((q, i) => (
+                  <div key={i} className="flex justify-between items-center mb-1">
+                    <span>
+                      {i + 1}. {q.question} (Correct: Option {q.correctAnswer + 1})
+                    </span>
+                    <button
+                      type="button"
+                      className="text-red-500 text-sm"
+                      onClick={() => {
+                        const updated = finalQuiz.questions.filter((_, idx) => idx !== i);
+                        setFinalQuiz({ ...finalQuiz, questions: updated });
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
 
         {/* Adding Chapters & Lectures */}
         <div>
