@@ -30,7 +30,7 @@ app.post('/stripe', express.raw({ type: 'application/json' }), stripeWebhooks);
 
 // PDFMonkey Certificate Webhook
 // Note: PDFMonkey will POST JSON, we verify secret inside controller
-app.post('/certificate-webhook', certificateWebhook);
+app.post('/certificate-webhook',express.json(), certificateWebhook);
 
 // App routes
 app.use('/api/educator', educatorRouter);

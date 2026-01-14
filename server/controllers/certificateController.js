@@ -53,7 +53,8 @@ export const getCertificate = async (req, res) => {
     const doc = response.data.document;
 
     // Save preview URL immediately so user sees something
-    progress.certificateUrl = doc.preview_url;
+    const finalUrl = download_url || doc.preview_url;
+    progress.certificateUrl = finalUrl;
     await progress.save();
 
     res.status(200).json({ success: true, download_url: doc.preview_url });
