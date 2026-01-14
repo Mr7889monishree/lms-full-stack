@@ -1,8 +1,8 @@
-import { useEffect, useState, useContext } from "react";
-import { AppContext } from "../../context/AppContext";
-import { useParams } from "react-router-dom";
-import axios from "axios";
-import { toast } from "react-toastify";
+import { useEffect, useState, useContext } from 'react';
+import { AppContext } from '../../context/AppContext';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const CertificatePage = () => {
   const { courseId } = useParams();
@@ -13,6 +13,8 @@ const CertificatePage = () => {
   useEffect(() => {
     if (!userData) return;
 
+    let interval;
+
     const fetchCertificate = async () => {
       try {
         const token = await getToken();
@@ -22,22 +24,28 @@ const CertificatePage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        if (data.success && data.download_url) {
+        if (data.download_url) {
           setCertificateUrl(data.download_url);
+          setLoading(false);
         } else {
-          toast.info("Certificate is being generated. Refresh in a few seconds.");
+          console.log('Certificate not ready yet...');
         }
       } catch (err) {
-        toast.error(err.response?.data?.error || err.message);
-      } finally {
+        toast.error(err.message);
         setLoading(false);
       }
     };
 
-    fetchCertificate();
+    // Poll every 5 seconds in case final PDF is updated via webhook
+    interval = setInterval(fetchCertificate, 5000);
+    fetchCertificate(); // initial fetch
+
+    return () => clearInterval(interval);
   }, [courseId, backendUrl, userData, getToken]);
 
-  if (!userData) return <p className="p-8 text-center text-gray-500">Loading user info...</p>;
+  if (!userData) {
+    return <p className="p-8 text-center text-gray-500">Loading user info...</p>;
+  }
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -52,11 +60,11 @@ const CertificatePage = () => {
           rel="noopener noreferrer"
           className="block bg-green-600 text-white font-semibold py-4 rounded-lg text-center hover:bg-green-700 transition-colors"
         >
-          Download/View Certificate
+          Download Certificate
         </a>
       ) : (
         <p className="text-center text-gray-500">
-          Certificate is being generated. Refresh in a few seconds.
+          Certificate is being generated. Please wait a few seconds.
         </p>
       )}
     </div>

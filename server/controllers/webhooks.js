@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import stripe from "stripe";
 import { Purchase } from "../models/Purchase.js";
 import Course from "../models/Course.js";
+import { CourseProgress } from "../models/CourseProgress.js";
 
 
 
@@ -182,3 +183,50 @@ export const stripeWebhooks = async (request, response) => {
   // Return a response to acknowledge receipt of the event
   response.json({ received: true });
 }
+
+
+export const certificateWebhook = async (req, res) => {
+  try {
+    // Verify secret token for security
+    const webhookSecret = process.env.PDFMONKEY_WEBHOOK_SECRET; // set this in your Vercel env
+    const incomingSecret = req.headers['x-pdfmonkey-signature'];
+
+    if (!incomingSecret || incomingSecret !== webhookSecret) {
+      console.log("Webhook: invalid or missing secret");
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { document } = req.body;
+
+    if (!document) {
+      console.log("Webhook: missing document in body", req.body);
+      return res.status(400).json({ success: false, message: "Missing document data" });
+    }
+
+    // Extract metadata and download_url
+    const { userId, courseId } = document.metadata || {};
+    const download_url = document.attributes?.download_url;
+
+    if (!userId || !courseId || !download_url) {
+      console.log("Webhook: missing userId/courseId/download_url", document);
+      return res.status(400).json({ success: false, message: "Incomplete data" });
+    }
+
+    // Update CourseProgress with final certificate URL
+    const progress = await CourseProgress.findOne({ userId, courseId });
+    if (!progress) {
+      console.log("Webhook: CourseProgress not found for", { userId, courseId });
+      return res.status(404).json({ success: false, message: "CourseProgress not found" });
+    }
+
+    progress.certificateUrl = download_url;
+    await progress.save();
+
+    console.log("Webhook: Certificate URL updated for user", userId, "course", courseId);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Webhook error:", err);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
+

@@ -13,48 +13,53 @@ export const getCertificate = async (req, res) => {
 
     // Fetch course progress
     let progress = await CourseProgress.findOne({ userId, courseId });
-    if (!progress) return res.status(404).json({ error: "Course progress not found" });
+    if (!progress) {
+      return res.status(404).json({ error: "Course progress not found" });
+    }
 
-    // Return existing certificate URL if available
+    // If certificate URL already exists (final), return it
     if (progress.certificateUrl) {
       return res.status(200).json({ success: true, download_url: progress.certificateUrl });
     }
 
-    // Fetch user and course data
+    // Otherwise, generate via PDFMonkey
     const user = await User.findById(userId);
     const course = await Course.findById(courseId);
-    if (!user || !course) return res.status(404).json({ error: "User or course not found" });
 
-    // Prepare PDF payload
+    if (!user || !course) {
+      return res.status(404).json({ error: "User or course not found" });
+    }
+
     const payload = {
       name: user.name,
       course: course.courseTitle,
       date: new Date().toISOString().split("T")[0]
     };
 
-    // Create PDFMonkey document
+    const metadata = { userId: user._id, courseId: course._id };
+
     const response = await axios.post(
       "https://api.pdfmonkey.io/api/v1/documents",
       {
-        document: { document_template_id: "5F4D15BD-BBF9-4D56-83B0-E07F21B7FD00", payload }
+        document: {
+          document_template_id: process.env.PDFMONKEY_TEMPLATE_ID,
+          payload,
+          metadata
+        }
       },
       { headers: { Authorization: `Bearer ${process.env.PDFMONKEY_API_KEY}` } }
     );
 
-    const doc = response.data?.document;
-    if (!doc) return res.status(500).json({ success: false, error: "PDFMonkey response invalid" });
+    const doc = response.data.document;
 
-    // Use preview_url immediately
-    const urlToUse = doc.download_url || doc.preview_url;
-    if (!urlToUse) return res.status(500).json({ success: false, error: "No certificate URL available" });
-
-    // Save to course progress
-    progress.certificateUrl = urlToUse;
+    // Save preview URL immediately so user sees something
+    progress.certificateUrl = doc.preview_url;
     await progress.save();
 
-    res.status(200).json({ success: true, download_url: urlToUse });
+    res.status(200).json({ success: true, download_url: doc.preview_url });
+
   } catch (err) {
-    console.error("Certificate generation error:", err.response?.data || err.message);
+    console.error("Get Certificate error:", err.response?.data || err.message);
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
