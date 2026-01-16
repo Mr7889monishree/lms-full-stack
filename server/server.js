@@ -8,6 +8,7 @@ import { clerkMiddleware } from '@clerk/express';
 import { certificateWebhook, clerkWebhooks, stripeWebhooks } from './controllers/webhooks.js';
 import educatorRouter from './routes/educatorRoutes.js';
 import courseRouter from './routes/courseRoute.js';
+import bodyParser from 'body-parser';
 
 
 // Initialize Express
@@ -27,7 +28,7 @@ app.get('/', (req, res) => res.send("API Working"));
 
 // Clerk and Stripe webhooks
 app.post('/clerk', express.json(), clerkWebhooks);
-app.post('/stripe', express.raw({ type: 'application/json' }), stripeWebhooks);
+app.post('/stripe', bodyParser.raw({ type: 'application/json' }), stripeWebhooks);
 
 // PDFMonkey Certificate Webhook
 // Note: PDFMonkey will POST JSON, we verify secret inside controller
