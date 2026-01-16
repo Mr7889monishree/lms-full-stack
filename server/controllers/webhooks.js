@@ -65,7 +65,7 @@ import { CourseProgress } from "../models/CourseProgress.js";
   }
 } */
 
-export const clerkWebhooks = async (req, res) => {
+/* export const clerkWebhooks = async (req, res) => {
   try {
     const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
 
@@ -111,8 +111,132 @@ export const clerkWebhooks = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
-};
+}; */
+export const clerkWebhooks = async (req, res) => {
+  try {
+    // ---------- Clerk Webhook Verification ----------
+    if (req.headers["svix-id"]) {
+      const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
 
+      await whook.verify(JSON.stringify(req.body), {
+        "svix-id": req.headers["svix-id"],
+        "svix-timestamp": req.headers["svix-timestamp"],
+        "svix-signature": req.headers["svix-signature"],
+      });
+
+      const { data, type } = req.body;
+
+      switch (type) {
+        case 'user.created': {
+          const userData = {
+            _id: data.id,
+            email: data.email_addresses?.[0]?.email_address || '',
+            name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+            imageUrl: data.image_url || '',
+            resume: ''
+          };
+          await User.create(userData);
+          return res.json({ success: true });
+        }
+
+        case 'user.updated': {
+          const userData = {
+            email: data.email_addresses?.[0]?.email_address || '',
+            name: `${data.first_name || ''} ${data.last_name || ''}`.trim(),
+            imageUrl: data.image_url || ''
+          };
+          await User.findByIdAndUpdate(data.id, userData, { new: true, runValidators: true });
+          return res.json({ success: true });
+        }
+
+        case 'user.deleted': {
+          await User.findByIdAndDelete(data.id);
+          return res.json({ success: true });
+        }
+
+        default:
+          return res.json({ success: false, message: 'Unhandled Clerk event type' });
+      }
+    }
+
+    // ---------- Stripe Webhook Verification ----------
+    if (req.headers['stripe-signature']) {
+      const sig = req.headers['stripe-signature'];
+      let event;
+
+      try {
+        event = stripe.webhooks.constructEvent(
+          req.body,
+          sig,
+          process.env.STRIPE_WEBHOOK_SECRET
+        );
+      } catch (err) {
+        console.error('Stripe webhook signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+      }
+
+      switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data.object;
+          const purchaseId = session.metadata?.purchaseId;
+
+          if (!purchaseId) {
+            console.error('Missing purchaseId in session metadata');
+            break;
+          }
+
+          const purchase = await Purchase.findById(purchaseId);
+          if (!purchase) break;
+
+          const user = await User.findById(purchase.userId);
+          const course = await Course.findById(purchase.courseId);
+          if (!user || !course) break;
+
+          if (!course.enrolledStudents.includes(user._id)) {
+            course.enrolledStudents.push(user._id);
+            await course.save();
+          }
+
+          if (!user.enrolledCourses.includes(course._id)) {
+            user.enrolledCourses.push(course._id);
+            await user.save();
+          }
+
+          purchase.status = 'completed';
+          await purchase.save();
+          console.log(`Stripe payment completed for purchase ${purchaseId}`);
+          break;
+        }
+
+        case 'checkout.session.expired': {
+          const session = event.data.object;
+          const purchaseId = session.metadata?.purchaseId;
+          if (!purchaseId) break;
+
+          const purchase = await Purchase.findById(purchaseId);
+          if (!purchase) break;
+
+          purchase.status = 'failed';
+          await purchase.save();
+          console.log(`Stripe session expired for purchase ${purchaseId}`);
+          break;
+        }
+
+        default:
+          console.log(`Unhandled Stripe event type: ${event.type}`);
+      }
+
+      return res.json({ received: true });
+    }
+
+    // If neither Clerk nor Stripe headers found
+    return res.status(400).json({ success: false, message: 'Unknown webhook source' });
+
+  } catch (error) {
+    console.error('Webhook handler error:', error.message);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
 // Stripe Gateway Initialize
 const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
 
