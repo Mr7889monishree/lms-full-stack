@@ -26,7 +26,7 @@ app.get('/', (req, res) => res.send("API Working"));
 
 // Clerk and Stripe webhooks
 app.post('/clerk', express.json(), clerkWebhooks);
-app.post('/stripe', epxress.raw({ type: 'application/json' }), stripeWebhooks);
+app.post('/stripe', express.raw({ type: 'application/json' }), stripeWebhooks);
 
 // PDFMonkey Certificate Webhook
 // Note: PDFMonkey will POST JSON, we verify secret inside controller
