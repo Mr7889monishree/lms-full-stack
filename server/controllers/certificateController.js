@@ -2,6 +2,7 @@ import { CourseProgress } from "../models/CourseProgress.js";
 import User from "../models/User.js";
 import Course from "../models/Course.js";
 import axios from "axios";
+import Feedback from "../models/Feedback.js";
 
 export const getCertificate = async (req, res) => {
   try {
@@ -53,7 +54,7 @@ export const getCertificate = async (req, res) => {
     const doc = response.data.document;
 
     // Save preview URL immediately so user sees something
-    const finalUrl = download_url || doc.preview_url;
+    const finalUrl =doc.preview_url;
     progress.certificateUrl = finalUrl;
     await progress.save();
 
@@ -62,5 +63,33 @@ export const getCertificate = async (req, res) => {
   } catch (err) {
     console.error("Get Certificate error:", err.response?.data || err.message);
     res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
+
+export const postFeeback = async (req, res) => {
+  try {
+    const { name, email, message, rating,profileImage } = req.body;
+    if (!message || !name) return res.status(400).json({ error: 'Name and message required' });
+
+    const feedback = new Feedback({ name, email, message, rating: rating || 5,
+      profileImage
+    });
+    await feedback.save();
+
+    res.status(201).json({ success: true, feedback });
+  } catch (err) {
+    console.error('Feedback creation error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
+export const getFeedbacks = async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find().sort({ createdAt: -1 }); // newest first
+    res.status(200).json(feedbacks);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
 };

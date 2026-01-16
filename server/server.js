@@ -9,6 +9,7 @@ import { certificateWebhook, clerkWebhooks, stripeWebhooks } from './controllers
 import educatorRouter from './routes/educatorRoutes.js';
 import courseRouter from './routes/courseRoute.js';
 
+
 // Initialize Express
 const app = express();
 
@@ -36,6 +37,7 @@ app.post('/certificate-webhook',express.json(), certificateWebhook);
 app.use('/api/educator', educatorRouter);
 app.use('/api/course', courseRouter);
 app.use('/api/user', userRouter);
+
 
 // Port
 const PORT = process.env.PORT || 5000;
