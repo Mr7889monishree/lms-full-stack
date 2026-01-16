@@ -113,36 +113,48 @@ export const clerkWebhooks = async (req, res) => {
   }
 };
 
-// Stripe Gateway Initialize
-const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
+const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
 
-
-// Stripe Webhooks to Manage Payments Action
 export const stripeWebhooks = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
-    // <-- DO NOT stringify
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    // Use raw body here!
+    event = stripeInstance.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
   } catch (err) {
     console.error('Stripe webhook signature failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Now handle the event as usual
   const session = event.data.object;
   const purchaseId = session.metadata?.purchaseId;
 
-  if (purchaseId) {
+  if (!purchaseId) {
+    console.warn('Webhook received with no purchaseId metadata');
+    return res.status(400).send('Missing purchaseId');
+  }
+
+  try {
     const purchase = await Purchase.findById(purchaseId);
-    if (purchase) {
+    if (!purchase) {
+      console.warn('Purchase not found for ID:', purchaseId);
+      return res.status(404).send('Purchase not found');
+    }
+
+    // Only update if not already completed
+    if (purchase.status !== 'completed') {
       purchase.status = 'completed';
       await purchase.save();
 
       const user = await User.findById(purchase.userId);
       const course = await Course.findById(purchase.courseId);
 
+      // Avoid duplicates
       if (!course.enrolledStudents.includes(user._id)) {
         course.enrolledStudents.push(user._id);
         await course.save();
@@ -152,11 +164,19 @@ export const stripeWebhooks = async (req, res) => {
         user.enrolledCourses.push(course._id);
         await user.save();
       }
-    }
-  }
 
-  res.json({ received: true });
+      console.log(`Purchase ${purchaseId} marked completed, user enrolled in course.`);
+    } else {
+      console.log(`Purchase ${purchaseId} already completed.`);
+    }
+
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Webhook processing error:', err);
+    res.status(500).send('Internal Server Error');
+  }
 };
+
 
 
 
