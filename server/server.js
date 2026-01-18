@@ -17,26 +17,27 @@ await connectDB();
 await connectCloudinary();
 
 // Middlewares
+// Middlewares
 app.use(cors());
 app.use(clerkMiddleware());
-app.use(express.json()); // Make sure JSON parsing is enabled globally
 
 // Routes
 app.get('/', (req, res) => res.send("API Working"));
 
-// Clerk and Stripe webhooks
+// Clerk webhook (still JSON)
 app.post('/clerk', express.json(), clerkWebhooks);
+
+// Stripe webhook (raw body for signature verification)
 app.post('/stripe', express.raw({ type: 'application/json' }), stripeWebhooks);
 
 // PDFMonkey Certificate Webhook
-// Note: PDFMonkey will POST JSON, we verify secret inside controller
-app.post('/certificate-webhook',express.json(), certificateWebhook);
+app.post('/certificate-webhook', express.json(), certificateWebhook);
 
-// App routes
+// App routes with JSON parsing
+app.use(express.json()); // Apply JSON parsing AFTER webhooks
 app.use('/api/educator', educatorRouter);
 app.use('/api/course', courseRouter);
 app.use('/api/user', userRouter);
-
 
 // Port
 const PORT = process.env.PORT || 5000;
