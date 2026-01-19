@@ -76,23 +76,27 @@ const QuizPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (data.success) {
+      // ✅ Check actual pass/fail
+      if (data.success && data.passed) {
         setShowPassPopup(true);
         setShowConfetti(true);
         setIsCompleted(true);
         setHasPassed(true);
 
-        setTimeout(() =>{
+        setTimeout(() => {
           setShowConfetti(false);
           navigate(`/certificate/${courseId}`);
         }, 5000);
-
-        // ✅ Redirect immediately to Certificate Page
-        
       } else {
-        toast.error("❌ You did not pass. Try again!", { autoClose: 2500 });
+        // Failed case
+        toast.error('❌ You did not pass. Redirecting to My Enrollments', { autoClose: 2500 });
         setIsCompleted(true);
         setHasPassed(false);
+
+        // Mark quiz as completed but not passed
+        setTimeout(() => {
+          navigate('/my-enrollments');
+        }, 2500);
       }
     } catch (err) {
       toast.error(err.message);
