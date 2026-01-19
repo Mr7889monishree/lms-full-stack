@@ -66,42 +66,38 @@ const QuizPage = () => {
 
   // Submit quiz
   const submitQuiz = async () => {
-    if (isCompleted) return; // prevent re-attempt
+  if (isCompleted) return; // prevent re-attempt
 
-    try {
-      const token = await getToken();
-      const { data } = await axios.post(
-        `${backendUrl}/api/user/submit-quiz`,
-        { courseId, answers },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  try {
+    const token = await getToken();
+    const { data } = await axios.post(
+      `${backendUrl}/api/user/submit-quiz`,
+      { courseId, answers },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      // ✅ Check actual pass/fail
-      if (data.success && data.passed) {
-        setShowPassPopup(true);
-        setShowConfetti(true);
-        setIsCompleted(true);
-        setHasPassed(true);
+    setIsCompleted(true); // disable submit button
+    setHasPassed(data.passed);
 
-        setTimeout(() => {
-          setShowConfetti(false);
-          navigate(`/certificate/${courseId}`);
-        }, 5000);
-      } else {
-        // Failed case
-        toast.error('❌ You did not pass. Redirecting to My Enrollments', { autoClose: 2500 });
-        setIsCompleted(true);
-        setHasPassed(false);
+    if (data.passed) {
+      setShowPassPopup(true);
+      setShowConfetti(true);
 
-        // Mark quiz as completed but not passed
-        setTimeout(() => {
-          navigate('/my-enrollments');
-        }, 2500);
-      }
-    } catch (err) {
-      toast.error(err.message);
+      setTimeout(() => {
+        setShowConfetti(false);
+        navigate(`/certificate/${courseId}`);
+      }, 5000);
+    } else {
+      toast.error('❌ You did not pass. Redirecting to My Enrollments', { autoClose: 2500 });
+      setTimeout(() => {
+        navigate('/my-enrollments');
+      }, 2500);
     }
-  };
+  } catch (err) {
+    toast.error(err.message);
+  }
+};
+
 
   if (loading)
     return <p className="p-8 text-center text-gray-500 text-lg">Loading quiz...</p>;

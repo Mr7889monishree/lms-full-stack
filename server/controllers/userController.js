@@ -218,6 +218,7 @@ export const addUserRating = async (req, res) => {
 };
 
 //SUBMIT QUIZ TO COURSE(STUDENT)
+// SUBMIT QUIZ TO COURSE (STUDENT)
 export const submitQuizController = async (req, res) => {
   try {
     const { userId } = getAuth(req);
@@ -239,41 +240,33 @@ export const submitQuizController = async (req, res) => {
       return res.json({ success: false, message: "No quiz available" });
     }
 
+    // Calculate correct answers
     let correct = 0;
-
     quiz.forEach((q, index) => {
-      const userAnswerText = answers[index]; // "Paris"
+      const userAnswerText = answers[index];
       if (!userAnswerText) return;
 
-      // Find index of the selected option
       const selectedIndex = q.options.findIndex(
         opt => opt.toString().trim() === userAnswerText.toString().trim()
       );
 
-      // Compare with stored correctAnswer index
-      if (selectedIndex === q.correctAnswer) {
-        correct++;
-      }
+      if (selectedIndex === q.correctAnswer) correct++;
     });
 
+    // Pass if >= 50%
     const passed = correct / totalQuestions >= 0.5;
 
-    const progress = await CourseProgress.findOne({ userId, courseId });
+    // Get or create progress
+    let progress = await CourseProgress.findOne({ userId, courseId });
     if (!progress) {
       return res.json({ success: false, message: "Course progress not found" });
     }
 
     progress.quizPassed = passed;
-
-    const totalLectures = course.courseContent.reduce(
-      (acc, chapter) => acc + chapter.chapterContent.length,
-      0
-    );
-
-    if (progress.completedLectures.length === totalLectures && passed) {
-      progress.isCompleted = true;
-      progress.completedAt = new Date();
-    }
+    progress.quizCompletedAt = new Date(); // timestamp when quiz was attempted
+    progress.isCompleted = progress.completedLectures.length === course.courseContent.reduce(
+      (acc, ch) => acc + ch.chapterContent.length, 0
+    ) && passed;
 
     await progress.save();
 
@@ -282,9 +275,10 @@ export const submitQuizController = async (req, res) => {
       passed,
       correct,
       totalQuestions,
-      message: passed ? "Quiz passed!" : "Quiz failed. Try again!",
+      message: passed
+        ? "Quiz passed! Course completed."
+        : "Quiz failed. Course marked as completed but no certificate.",
     });
-
   } catch (err) {
     console.error(err);
     res.json({ success: false, message: err.message });
