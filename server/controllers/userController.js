@@ -240,7 +240,7 @@ export const submitQuizController = async (req, res) => {
       return res.json({ success: false, message: "No quiz available" });
     }
 
-    // Calculate correct answers
+    // Count correct answers
     let correct = 0;
     quiz.forEach((q, index) => {
       const userAnswerText = answers[index];
@@ -253,20 +253,25 @@ export const submitQuizController = async (req, res) => {
       if (selectedIndex === q.correctAnswer) correct++;
     });
 
-    // Pass if >= 50%
     const passed = correct / totalQuestions >= 0.5;
 
-    // Get or create progress
+    // Find course progress
     let progress = await CourseProgress.findOne({ userId, courseId });
     if (!progress) {
       return res.json({ success: false, message: "Course progress not found" });
     }
 
+    // ✅ Always mark quiz as attempted
     progress.quizPassed = passed;
-    progress.quizCompletedAt = new Date(); // timestamp when quiz was attempted
-    progress.isCompleted = progress.completedLectures.length === course.courseContent.reduce(
-      (acc, ch) => acc + ch.chapterContent.length, 0
-    ) && passed;
+    progress.quizCompletedAt = new Date();
+
+    // ✅ Mark course as completed regardless of pass/fail
+    progress.isCompleted = true;
+
+    // ✅ Only set completedAt if passed
+    if (passed) {
+      progress.completedAt = new Date();
+    }
 
     await progress.save();
 
@@ -277,12 +282,12 @@ export const submitQuizController = async (req, res) => {
       totalQuestions,
       message: passed
         ? "Quiz passed! Course completed."
-        : "Quiz failed. Course marked as completed but no certificate.",
+        : "Quiz failed. Course marked completed, no certificate.",
     });
+
   } catch (err) {
     console.error(err);
     res.json({ success: false, message: err.message });
   }
 };
-
 

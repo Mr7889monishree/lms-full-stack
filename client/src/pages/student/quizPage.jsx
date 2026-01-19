@@ -66,7 +66,7 @@ const QuizPage = () => {
 
   // Submit quiz
   const submitQuiz = async () => {
-  if (isCompleted) return; // prevent re-attempt
+  if (isCompleted) return;
 
   try {
     const token = await getToken();
@@ -76,7 +76,7 @@ const QuizPage = () => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    setIsCompleted(true); // disable submit button
+    setIsCompleted(true);  // disables Submit button
     setHasPassed(data.passed);
 
     if (data.passed) {
@@ -88,7 +88,7 @@ const QuizPage = () => {
         navigate(`/certificate/${courseId}`);
       }, 5000);
     } else {
-      toast.error('Sorry! You did not pass.', { autoClose: 2500 });
+      toast.error('❌ You did not pass. Redirecting to My Enrollments', { autoClose: 2500 });
       setTimeout(() => {
         navigate('/my-enrollments');
       }, 2500);
@@ -97,6 +97,7 @@ const QuizPage = () => {
     toast.error(err.message);
   }
 };
+
 
 
   if (loading)

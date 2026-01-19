@@ -112,15 +112,14 @@ const MyEnrollments = () => {
                 </td>
 
                 <td className="px-4 py-3 max-sm:text-right">
-                  <button
+                 <button
   onClick={() => navigate('/player/' + course._id)}
   className="px-3 sm:px-5 py-1.5 sm:py-2 bg-blue-600 max-sm:text-xs text-white"
-  disabled={progressArray[index]?.isCompleted} // disables button if completed
+  disabled={progressArray[index]?.isCompleted} // ✅ Disabled if completed (pass or fail)
 >
-  {progressArray[index] && progressArray[index].isCompleted
-    ? 'Completed'
-    : 'On Going'}
+  {progressArray[index]?.isCompleted ? 'Completed' : 'On Going'}
 </button>
+
 
                 </td>
               </tr>
