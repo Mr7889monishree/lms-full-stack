@@ -88,7 +88,7 @@ const QuizPage = () => {
         navigate(`/certificate/${courseId}`);
       }, 5000);
     } else {
-      toast.error('❌ You did not pass. Redirecting to My Enrollments', { autoClose: 2500 });
+      toast.error('Sorry! You did not pass.', { autoClose: 2500 });
       setTimeout(() => {
         navigate('/my-enrollments');
       }, 2500);
