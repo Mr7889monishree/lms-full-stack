@@ -21,12 +21,16 @@ await connectCloudinary();
 // ===== CORS FIRST (VERY IMPORTANT) =====
 app.use(
   cors({
-    origin: ['https://lms-full-stack-frontend-only.vercel.app'],
+    origin: [
+      'https://lms-full-stack-frontend-only.vercel.app',
+      'https://lms-full-stack-frontend-drab.vercel.app'
+    ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization']
   })
 );
+
 
 // Handle preflight requests explicitly
 app.options('*', cors());
