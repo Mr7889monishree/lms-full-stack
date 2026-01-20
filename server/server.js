@@ -21,7 +21,7 @@ await connectCloudinary();
 // ===== CORS FIRST (VERY IMPORTANT) =====
 app.use(
   cors({
-    origin: ['https://lms-full-stack-cov4.vercel.app/'],
+    origin: ['https://lms-full-stack-cov4.vercel.app'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
