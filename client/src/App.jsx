@@ -15,7 +15,7 @@ import Player from './pages/student/Player'
 import MyEnrollments from './pages/student/MyEnrollments'
 import Loading from './components/student/Loading'
 import QuizPage from './pages/student/quizPage'
-import CertificatePage from './pages/student/certificatePage'
+import CertificatePage from './pages/student/CertificatePage'
 
 const App = () => {
 
