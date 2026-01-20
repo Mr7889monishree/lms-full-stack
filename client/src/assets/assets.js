@@ -42,6 +42,7 @@ import profile_img from './profile_img.png'
 import profile_img2 from './profile_img2.png'
 import profile_img3 from './profile_img3.png'
 import lesson_icon from './lesson_icon.svg'
+import logo_new from './logo_new.png'
 
 
 export const assets = {
@@ -67,6 +68,7 @@ export const assets = {
     cross_icon,
     upload_area,
     logo_dark,
+    logo_new,
     down_arrow_icon,
     time_left_clock_icon,
     time_clock_icon,
