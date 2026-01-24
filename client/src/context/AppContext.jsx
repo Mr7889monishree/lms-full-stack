@@ -66,15 +66,7 @@ export const AppContextProvider = (props) => {
         }
 
     }
-    const logToken=async()=>{
-        const token=await getToken();
-        if(token){
-            console.log(token);
-        }
-        else{
-            console.error('not found');
-        }
-    }
+    
 
     // Fetch User Enrolled Courses
     const fetchUserEnrolledCourses = async () => {
@@ -151,7 +143,6 @@ export const AppContextProvider = (props) => {
         if (user) {
             fetchUserData()
             fetchUserEnrolledCourses()
-            logToken();
             
         }
     }, [user])
