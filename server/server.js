@@ -19,21 +19,7 @@ await connectCloudinary();
 // Middlewares
 // Middlewares
 // ===== CORS FIRST (VERY IMPORTANT) =====
-app.use(
-  cors({
-    origin: [
-      'https://lms-full-stack-frontend-only.vercel.app',
-      'https://lms-full-stack-frontend-drab.vercel.app'
-    ],
-    credentials: true,
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization']
-  })
-);
-
-
-// Handle preflight requests explicitly
-app.options('*', cors());
+app.use(cors());
 
 // ===== THEN Clerk =====
 app.use(clerkMiddleware());
